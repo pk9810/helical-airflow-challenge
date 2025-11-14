@@ -25,45 +25,32 @@ ENV/
 *.conda
 *.yaml
 *.yml
-# But allow environment.yml template
 !environment.yml
 
 ############################
-# AIRFLOW
+# AIRFLOW (ignore runtime only)
 ############################
 airflow/logs/
-airflow/config/airflow.cfg
-airflow/config/webserver_config.py
-airflow/airflow.db
-airflow/*.pid
-
-# Airflow SQLite DB (if used)
 airflow/airflow.db
 airflow/airflow.db-journal
-
-# Celery / workers temp files
+airflow/*.pid
 airflow/celerybeat-schedule
 airflow/celerybeat.pid
+airflow/config/airflow.cfg
+airflow/config/webserver_config.py
 
 ############################
-# DOCKER
+# DOCKER VOLUMES (but keep docker-compose.yml)
 ############################
-# Docker local volumes
 docker-data/
-data/
 monitoring/data/
-
-# Docker build artifacts
-*.log
-*.pid
-*.sock
-docker-compose.override.yml
-
-############################
-# PROMETHEUS / GRAFANA
-############################
 monitoring/grafana/
 monitoring/prometheus/data/
+*.sock
+
+############################
+# PROMETHEUS / GRAFANA GENERATED DATA
+############################
 **/prometheus-data/
 **/grafana-data/
 
@@ -90,11 +77,8 @@ Thumbs.db
 ############################
 # GIT SAFE FILES
 ############################
-# Local environment definitions
 .env
 .env.*
-
-# Avoid secrets
 *.key
 *.pem
 *.crt
@@ -102,15 +86,13 @@ Thumbs.db
 ############################
 # PROJECT SPECIFIC
 ############################
-# Generated metrics (runner container)
 metrics/
 tmp/
 tmp-data/
-
-# Helical model outputs
 outputs/
 results/
 checkpoints/
 embeddings/
 
+# Ignore large installers
 miniconda.sh
