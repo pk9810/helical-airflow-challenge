@@ -1,0 +1,3 @@
+helical            # main package
+anndata            # to open .h5ad if you want
+scanpy             # optional but nice in this ecosystem

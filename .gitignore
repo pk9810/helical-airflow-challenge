@@ -1,0 +1,114 @@
+############################
+# PYTHON
+############################
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+build/
+dist/
+.eggs/
+*.sqlite
+
+############################
+# ENVIRONMENTS
+############################
+# Virtualenv
+venv/
+.venv/
+env/
+ENV/
+
+# Conda environment files
+*.conda
+*.yaml
+*.yml
+# But allow environment.yml template
+!environment.yml
+
+############################
+# AIRFLOW
+############################
+airflow/logs/
+airflow/config/airflow.cfg
+airflow/config/webserver_config.py
+airflow/airflow.db
+airflow/*.pid
+
+# Airflow SQLite DB (if used)
+airflow/airflow.db
+airflow/airflow.db-journal
+
+# Celery / workers temp files
+airflow/celerybeat-schedule
+airflow/celerybeat.pid
+
+############################
+# DOCKER
+############################
+# Docker local volumes
+docker-data/
+data/
+monitoring/data/
+
+# Docker build artifacts
+*.log
+*.pid
+*.sock
+docker-compose.override.yml
+
+############################
+# PROMETHEUS / GRAFANA
+############################
+monitoring/grafana/
+monitoring/prometheus/data/
+**/prometheus-data/
+**/grafana-data/
+
+############################
+# JUPYTER
+############################
+.ipynb_checkpoints/
+*.ipynb_save
+
+############################
+# OS & EDITOR JUNK
+############################
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.tmp
+*~
+.cache/
+.history/
+.vscode/
+.idea/
+
+############################
+# GIT SAFE FILES
+############################
+# Local environment definitions
+.env
+.env.*
+
+# Avoid secrets
+*.key
+*.pem
+*.crt
+
+############################
+# PROJECT SPECIFIC
+############################
+# Generated metrics (runner container)
+metrics/
+tmp/
+tmp-data/
+
+# Helical model outputs
+outputs/
+results/
+checkpoints/
+embeddings/
