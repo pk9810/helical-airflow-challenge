@@ -112,3 +112,5 @@ outputs/
 results/
 checkpoints/
 embeddings/
+
+miniconda.sh
