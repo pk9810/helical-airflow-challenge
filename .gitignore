@@ -23,8 +23,6 @@ ENV/
 
 # Conda environment files
 *.conda
-*.yaml
-*.yml
 !environment.yml
 
 ############################

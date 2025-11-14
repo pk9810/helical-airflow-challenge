@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  # Scrape Prometheus itself
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["prometheus:9090"]
+
+  # Placeholder for Airflow / exporter
+  # In a real setup I'd expose:
+  # - airflow-exporter
+  # - or statsd-exporter that receives Airflow statsd metrics.
+  # Example stub:
+  - job_name: "airflow"
+    static_configs:
+      - targets: ["airflow-webserver:8080"]
