@@ -12,8 +12,17 @@ x-airflow-common:
     AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
     AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
     AIRFLOW__WEBSERVER__RBAC: "True"
-    # Basic auth creds for demo
-    _PIP_ADDITIONAL_REQUIREMENTS: "apache-airflow-providers-docker"
+# Install Docker provider inside Airflow image
+    _PIP_ADDITIONAL_REQUIREMENTS: |
+      apache-airflow[statsd]
+      apache-airflow-providers-docker
+
+    # 🔹 Enable StatsD metrics from Airflow → statsd-exporter
+    AIRFLOW__METRICS__STATSD_ON: "True"
+    AIRFLOW__METRICS__STATSD_HOST: "statsd-exporter"
+    AIRFLOW__METRICS__STATSD_PORT: "9125"
+    AIRFLOW__METRICS__STATSD_PREFIX: "airflow"
+    AIRFLOW__SCHEDULER__ENABLE_METRICS: "True"
 
   volumes:
     - ./airflow/dags:/opt/airflow/dags
@@ -24,6 +33,7 @@ x-airflow-common:
   depends_on:
     - postgres
     - redis
+    - statsd-exporter
 
 services:
   postgres:
@@ -69,15 +79,30 @@ services:
           --role Admin
           --email admin@example.com
 
+ # 🔹 Prometheus metrics pipeline
+
+  statsd-exporter:
+    image: prom/statsd-exporter
+    container_name: statsd-exporter
+    # listens on UDP :9125 for statsd and :9102 for /metrics
+    ports:
+      - "9102:9102"         # Prometheus scrapes here
+      - "9125:9125/udp"     # Airflow sends StatsD metrics here
+
   prometheus:
     image: prom/prometheus:latest
+    container_name: prometheus
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+    depends_on:
+      - statsd-exporter
+      - cadvisor
 
   grafana:
     image: grafana/grafana:latest
+    container_name: grafana
     depends_on:
       - prometheus
     environment:
@@ -87,3 +112,14 @@ services:
       - "3000:3000"
     volumes:
       - ./monitoring/grafana:/var/lib/grafana
+
+  # ---------------------- Container-level metrics ----------------------
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8081:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/rootfs:ro
+      - /var/lib/docker/:/var/lib/docker:ro
