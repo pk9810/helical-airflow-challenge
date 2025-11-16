@@ -44,9 +44,7 @@ The operator launches the container:
 -   Image: `helical-runner:latest`
 -   Mounts dataset folder:
 
-```{=html}
-<!-- -->
-```
+
     ./data → /data (inside container)
 
 Runs:
