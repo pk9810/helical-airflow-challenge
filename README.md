@@ -1,235 +1,197 @@
-🚀 Helical Airflow Challenge
-Containerized Workflow Orchestration with Airflow, Docker, Prometheus, Grafana & cAdvisor
+# Helical Airflow Challenge -- Workflow Orchestration + Observability
 
-This project implements a containerized workflow orchestration system designed for the Helical Technical Challenge.
-It features:
+This project implements a containerised machine-learning workflow using:
 
-Apache Airflow running with the Celery Executor
+-   Apache Airflow for orchestration
+-   Docker for isolated model execution
+-   Prometheus + Grafana for observability
+-   A custom Helical Runner container that executes `run_helical.py`
+-   Shared data volume for reading `.h5ad` datasets
 
-Dockerized Helical model execution inside an Airflow DAG
+Everything runs fully locally using docker-compose.
 
-Structured data mounting (/opt/data)
+## 🚀 What This System Does
 
-Prometheus-based observability pipeline
+This workflow automates end-to-end execution of a Helical ML pipeline
+using Airflow + Docker + Prometheus + Grafana.
 
-StatsD → statsd-exporter → Prometheus → Grafana
+### 1️⃣ User triggers a DAG in Airflow UI
 
-Container-level resource monitoring via cAdvisor
+Go to: <http://localhost:8080>
 
-Fully repeatable local environment setup script (Conda + Helical installation)
+**Login credentials**
 
-📁 Project Structure
-helical-airflow-challenge/
-│
-├── airflow/
-│   ├── dags/
-│   │   └── helical_model_workflow.py
-│   ├── logs/
-│   └── config/
-│
-├── data/                       # Mounted into the model container
-│   └── sample.h5ad
-│
-├── monitoring/
-│   ├── prometheus.yml
-│   └── grafana/
-│
-├── setup_helical_env.sh        # One-click local setup & Helical installation
-├── docker-compose.yml
-└── README.md
+    Username: admin
+    Password: admin
 
-⚙️ 1. Environment Setup (One-Click Script)
+Then:
 
-Run this script on any machine for the first-time setup:
+-   Open `helical_model_workflow`
+-   Click ▶ Trigger DAG
 
-chmod +x setup_helical_env.sh
-./setup_helical_env.sh
+### 2️⃣ Airflow schedules the task
 
-The script automatically:
+Airflow internal flow:
 
-✔ Detects OS
-✔ Installs Miniconda (if missing)
-✔ Creates Conda env helical-package
-✔ Installs Helical (PyPI + GitHub latest)
-✔ Ensures Python 3.11.13
-✔ Installs optional extensions
-✔ Automatically activates the environment in new terminals
+    Webserver → Scheduler → Worker
 
-🐳 2. Start Full Docker Orchestration
+Worker executes the DockerOperator task.
 
-Ensure Docker is installed.
+### 3️⃣ DockerOperator starts the Helical Runner container
 
-Start everything:
-docker compose up -d --build
+The operator launches the container:
 
-Stop everything (including volumes):
-docker compose down -v
+-   Image: `helical-runner:latest`
+-   Mounts dataset folder:
 
-📦 3. Airflow Architecture
+```{=html}
+<!-- -->
+```
+    ./data → /data (inside container)
 
-This setup includes:
+Runs:
 
-Component	Purpose
-Airflow Webserver	UI & DAG management
-Airflow Scheduler	Orchestrates DAG tasks
-Airflow Worker (Celery)	Executes tasks
-Postgres	Airflow metadata DB
-Redis	Celery broker
-Docker provider	Allows Airflow to execute Helical container
+    python run_helical.py
 
-All tasks share a mounted folder:
+### 4️⃣ run_helical.py performs the ML pipeline
 
-host: ./data  →  container: /opt/data
+Inside the container:
 
-🧬 4. The Helical Model DAG
+-   Loads `.h5ad` dataset(s) from `/data`
+-   If empty → loads Scanpy PBMC3K dataset
+-   Shrinks dataset for fast CPU execution
+-   Runs scGPT embeddings (Helical SDK)
+-   Optionally trains a tiny classifier
+-   Writes metrics → `/tmp/metrics`
+-   Logs visible inside Airflow UI
 
-A sample DAG is included at:
+### 5️⃣ Observability Metrics Flow
 
-airflow/dags/helical_model_workflow.py
+    Airflow
+       ↓
+    StatsD
+       ↓
+    StatsD Exporter
+       ↓
+    Prometheus
+       ↓
+    Grafana
 
+Prometheus scrapes:
 
-It performs:
+-   Airflow task duration & failures\
+-   cAdvisor container CPU/Mem\
+-   StatsD metrics\
+-   Prometheus internal metrics
 
-start – empty task
+Grafana datasource:
 
-run_helical_model – runs a Docker container
+    URL: http://prometheus:9090
 
-end – empty task
+------------------------------------------------------------------------
 
-The Docker task mounts:
+# ▶ How To Run Everything (Copy-Paste Friendly)
 
-/opt/data → /opt/data  (inside container)
+Follow these steps exactly in order.
 
+------------------------------------------------------------------------
 
-You can swap this with any Helical model:
+## ✅ 1️⃣ (Optional) Install local Conda environment
 
-image="helicalai/helical:latest"
-command="python3 examples/run_model.py --input /opt/data/sample.h5ad"
+    chmod +x setup_helical_env.sh
+    ./setup_helical_env.sh
 
-📊 5. Observability Pipeline
+## ✅ 2️⃣ Initialise Airflow database (first time only)
 
-This project includes full metrics stack:
+🔥 IMPORTANT --- MUST RUN BEFORE ANYTHING ELSE
 
-Airflow → StatsD → statsd-exporter → Prometheus → Grafana → Dashboards
-                           ↑
-                cAdvisor → Prometheus
+    docker compose up airflow-init
 
-Prometheus Targets
-Target	Purpose
-statsd-exporter:9102	Airflow metrics
-cadvisor:8080	Container CPU / Memory metrics
-prometheus:9090	Self-metrics
-Access URLs
-Service	URL
-Airflow UI	http://localhost:8080
+This sets up:
 
-Prometheus	http://localhost:9090
+-   Airflow metadata DB\
+-   Admin user\
+-   Initial migrations
 
-Grafana	http://localhost:3000
+Stop it (Ctrl + C) after completion.
 
-cAdvisor	http://localhost:8081
-📈 6. Grafana Dashboards
+------------------------------------------------------------------------
 
-Grafana automatically loads "Heical – Airflow & Containers" dashboard.
+## ✅ 3️⃣ Start full system (Airflow + Prometheus + Grafana)
 
-Panels available:
+    docker compose up -d
 
-Airflow Scheduler Heartbeat
+### Services Available
 
-DAG Runs Count / Success / Duration
+  Service           URL
+  ----------------- -------------------------------
+  Airflow Web UI    http://localhost:8080
+  Prometheus        http://localhost:9090
+  Grafana           http://localhost:3000
+  StatsD Exporter   http://localhost:9102/metrics
+  cAdvisor          http://localhost:8081
 
-Task Duration (p95)
+------------------------------------------------------------------------
 
-Worker CPU / Memory (via cAdvisor)
+## ✅ 4️⃣ Build the Helical Runner container
 
-Per-container resource usage
+    docker build -t helical-runner:latest ./helical-container
 
-Login credentials:
+This image contains:
 
-Username: admin
-Password: admin
+-   Helical SDK\
+-   scGPT deps\
+-   Scanpy + AnnData\
+-   `run_helical.py`
 
-📑 7. Metrics Configuration
-StatsD in Airflow
-AIRFLOW__METRICS__STATSD_ENABLED: "True"
-AIRFLOW__METRICS__STATSD_HOST: "statsd-exporter"
-AIRFLOW__METRICS__STATSD_PORT: "9125"
-AIRFLOW__METRICS__STATSD_PREFIX: "airflow"
-AIRFLOW__METRICS__STATSD_ALLOW_LIST: "*"
+------------------------------------------------------------------------
 
-Prometheus scrapes statsd-exporter:
-- job_name: "airflow"
-  static_configs:
-    - targets: ["statsd-exporter:9102"]
+## ✅ 5️⃣ Add datasets (optional)
 
-🐳 8. Docker Compose Overview
+Place `.h5ad` files in:
 
-Key services included:
+    ./data/
 
-Service	Description
-airflow-webserver	Main UI
-airflow-scheduler	DAG scheduling
-airflow-worker	Task workers
-statsd-exporter	Metric bridge
-prometheus	Metrics storage
-grafana	Visualization
-cadvisor	Container monitoring
-redis	Celery broker
-postgres	Metadata DB
-🚦 9. Triggering a DAG
+These map to `/data` inside the container.
 
-Visit:
+If none provided → auto-loads PBMC3K dataset.
 
-➡ http://localhost:8080
+------------------------------------------------------------------------
 
-Enable DAG → Click "Play" → Trigger DAG.
+## ✅ 6️⃣ Trigger the Helical DAG in Airflow
 
-Prometheus & Grafana will show metrics once the DAG runs.
+1.  Visit: http://localhost:8080\
+2.  Unpause: `helical_model_workflow`\
+3.  Click "Trigger DAG"\
+4.  View logs:\
+    `run_helical_model → View Log`
 
-🧪 10. Verification Commands
-Check exporter metrics:
-curl http://localhost:9102/metrics | grep airflow
+------------------------------------------------------------------------
 
-Check cAdvisor:
-curl http://localhost:8081/metrics | head
+# 📊 Observability Setup
 
-Check Prometheus UI:
-open http://localhost:9090/targets
+## Prometheus
 
-Check Prometheus queries:
+Scrapes:
 
-statsd_airflow_scheduler_heartbeat
+-   StatsD Exporter (`airflow_*`)
+-   cAdvisor (container CPU/Mem)
+-   Prometheus internal metrics
 
-statsd_airflow_dagrun_success_total
+Config file:
 
-container_cpu_usage_seconds_total
+    monitoring/prometheus.yml
 
-🛠️ 11. Common Issues & Fixes
-❌ No Airflow metrics in Prometheus
+## Grafana
 
-✔ Ensure Airflow sends StatsD → port 9125, not 8125.
+Add datasource:
 
-❌ Grafana shows no data
+    URL: http://prometheus:9090
 
-✔ Trigger a DAG so metrics begin flowing.
+Dashboards can show:
 
-❌ Docker provider missing
-
-✔ Ensure _PIP_ADDITIONAL_REQUIREMENTS includes:
-
-apache-airflow-providers-docker
-statsd
-
-❌ Permission denied reading data files
-
-✔ Ensure ./data is readable by Docker.
-
-📌 12. Future Improvements
-
-Add MLflow tracking for model metadata
-
-Run Airflow with LocalKubernetesExecutor
-
-Add Loki + Promtail for central log aggregation
-
-Add model validation tasks in DAG
+-   DAG run durations\
+-   Task success/failure counts\
+-   Container CPU/memory usage\
+-   Airflow scheduler uptime\
+-   Worker activity & queue depth
