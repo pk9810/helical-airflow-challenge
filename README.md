@@ -1,5 +1,7 @@
 # Helical Airflow Challenge -- Workflow Orchestration + Observability
 
+Architectural Diagram: <https://github.com/pk9810/helical-airflow-challenge/wiki/Architectural-Diagram>
+
 This project implements a containerised machine-learning workflow using:
 
 -   Apache Airflow for orchestration
