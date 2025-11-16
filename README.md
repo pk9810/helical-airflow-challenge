@@ -126,10 +126,15 @@ Stop it (Ctrl + C) after completion.
   Service           URL
   ----------------- -------------------------------
   Airflow Web UI    http://localhost:8080
+  
   Prometheus        http://localhost:9090
+  
   Grafana           http://localhost:3000
+  
   StatsD Exporter   http://localhost:9102/metrics
+  
   cAdvisor          http://localhost:8081
+  
 
 ------------------------------------------------------------------------
 
