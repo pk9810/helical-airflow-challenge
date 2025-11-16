@@ -158,4 +158,3 @@ Lifecycle → Glacier after 60/90 days.
 ------------------------------------------------------------------------
 
 **Author:** Prateek Kesarwani\
-**Project:** Helical Airflow Challenge (Production Scaling Guide)
