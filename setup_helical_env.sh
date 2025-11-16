@@ -1,18 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-# ------------------------------------------------------
-# Helical Conda Environment Setup Script
-# ------------------------------------------------------
-# This script installs miniconda (if missing), creates a
-# dedicated conda environment for Helical model workflows,
-# installs all required dependencies (Airflow, Scanpy, ML
-# libs, Prometheus, Docker provider, etc.), and ensures
-# the env auto-activates in new terminals.
-#
-# Designed to work cleanly on both macOS + Linux.
-# ------------------------------------------------------
-
 ENV_NAME="helical-package"
 PY_VERSION="3.11.13"
 ACTIVATE_LINE="conda activate ${ENV_NAME}"
@@ -21,11 +9,6 @@ echo "--------------------------------------------"
 echo " Setting up Helical Conda Environment"
 echo "--------------------------------------------"
 
-# ------------------------------------------------------
-# 1. Detect OS (macOS vs Linux)
-# ------------------------------------------------------
-# uname -s gives Darwin on macOS, Linux on Ubuntu/Debian/etc.
-# We branch installation logic to make setup smooth on both.
 OS=$(uname -s)
 
 install_conda_mac() {
@@ -84,9 +67,6 @@ case "$OS" in
     *) echo "Unsupported OS: $OS"; exit 1 ;;
 esac
 
-# ------------------------------------------------------
-# 2. Initialize Conda for the current shell session
-# ------------------------------------------------------
 # This makes `conda activate` work immediately without restarting.
 if command -v conda &>/dev/null; then
     eval "$(conda shell.bash hook)"
@@ -95,17 +75,14 @@ else
     exit 1
 fi
 
-# ------------------------------------------------------
-# 3. Accept Anaconda Terms (non-interactive mode)
-# ------------------------------------------------------
-# We suppress errors because older conda versions may not require/understand this step.
+
+#Accept Anaconda Terms (non-interactive mode)
 echo "[+] Accepting Anaconda Terms of Service..."
 conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main  || true
 conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r     || true
 
-# ------------------------------------------------------
-# 4. Create the Conda Environment (if missing)
-# ------------------------------------------------------
+
+#Create the Conda Environment (if missing)
 if conda info --envs | grep -qE "^\s*${ENV_NAME}\s"; then
     echo "[+] Conda environment '${ENV_NAME}' already exists — skipping creation."
 else
@@ -116,14 +93,8 @@ fi
 echo "[+] Activating environment..."
 conda activate "${ENV_NAME}"
 
-# ------------------------------------------------------
-# 5. Install Helical packages
-# ------------------------------------------------------
-# We try both:
-# - Stable release from PyPI
-# - Latest development version from GitHub
-# If GitHub install fails (common on macOS arm64 due to bitsandbytes),
-# we gracefully fall back to PyPI.
+
+#Install Helical packages
 echo "[+] Installing Helical core packages..."
 pip install --upgrade pip wheel setuptools
 
@@ -139,14 +110,8 @@ pip install --upgrade "git+https://github.com/helicalAI/helical.git" || {
 echo "[+] Installing optional extras (mamba-ssm) if supported..."
 pip install "helical[mamba-ssm]" || true
 
-# ------------------------------------------------------
-# 6. Install workflow, ML, and Airflow dependencies
-# ------------------------------------------------------
-# These power:
-# - Airflow DAG execution
-# - AnnData processing
-# - High-dimensional biology workflows
-# - Prometheus metrics for observability
+
+#Install workflow, ML, and Airflow dependencies
 echo "[+] Installing workflow / ML / Airflow dependencies..."
 
 pip install \
@@ -163,10 +128,7 @@ pip install \
     tqdm \
     prometheus-client
 
-# ------------------------------------------------------
-# 7. Enable automatic activation in all new terminals
-# ------------------------------------------------------
-# Appends "conda activate <env>" to .bashrc/.zshrc if missing.
+#Enable automatic activation in all new terminals
 echo "[+] Enabling automatic activation..."
 
 for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
@@ -180,21 +142,7 @@ for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     fi
 done
 
-# ------------------------------------------------------
-# Final message
-# ------------------------------------------------------
 echo ""
 echo "=============================================="
 echo " Helical environment setup complete! 🎉"
-echo ""
-echo " Next steps:"
-echo "   • Open a NEW terminal → env auto-activates"
-echo "   • Or manually run: conda activate ${ENV_NAME}"
-echo ""
-echo " Installed:"
-echo "   ✔ Helical (PyPI + GitHub attempt)"
-echo "   ✔ Airflow + Docker Provider"
-echo "   ✔ Scanpy / AnnData / h5py"
-echo "   ✔ Prometheus Client"
-echo "   ✔ Optional mamba-ssm dependencies"
 echo "=============================================="

@@ -1,6 +1,5 @@
 FROM python:3.11-slim
 
-# System deps — now with Fortran + BLAS/LAPACK for scikit-misc & friends
 RUN apt-get update && apt-get install -y \
     build-essential \
     git \

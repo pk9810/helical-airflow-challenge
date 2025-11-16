@@ -5,10 +5,6 @@ from airflow.operators.empty import EmptyOperator
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-
-# -------------------------------------------------------------------
-# Default arguments applied to all tasks in this DAG
-# -------------------------------------------------------------------
 default_args = {
     "owner": "prateek",
     "retries": 1,                         # A lightweight retry for robustness
@@ -40,13 +36,6 @@ with DAG(
     tags=["helical", "ml", "docker"],
 ) as dag:
 
-    # ---------------------------------------------------------------
-    # Optional "no-op" start task
-    #
-    # Useful as:
-    #   - a visual DAG boundary
-    #   - a place to attach sensors or pre-checks later
-    # ---------------------------------------------------------------
     start = EmptyOperator(task_id="start")
 
     # ---------------------------------------------------------------
@@ -77,16 +66,13 @@ with DAG(
                 source="/Users/prateekkesarwani/Desktop/helical-airflow-challenge/data",
                 target="/data",                  # Container path
                 type="bind",
-                read_only=True,                 # Safe: data is input-only
+                read_only=True,
             )
         ],
         mount_tmp_dir=False,                    # Avoid ephemeral temp folder
         environment={"DATA_DIR": "/data"},      # Passed to Python script
     )
 
-    # ---------------------------------------------------------------
-    # Optional end marker
-    # ---------------------------------------------------------------
     end = EmptyOperator(task_id="end")
 
     # ---------------------------------------------------------------

@@ -22,11 +22,6 @@ from helical.models.scgpt import scGPT, scGPTConfig
 # Where Airflow mounts the data folder (in Docker: ./data -> /opt/data)
 DATA_DIR = os.environ.get("DATA_DIR", "/data")
 
-
-# ---------------------------------------------------------
-# Utility helpers: small wrappers for logging and file discovery
-# ---------------------------------------------------------
-
 def log(msg: str):
     """
     Print a log message with timestamp, similar to Airflow task logs.
@@ -215,10 +210,6 @@ def train_small_head(
 ) -> nn.Sequential:
     """
     Train a tiny feedforward classifier on scGPT embeddings.
-
-    The goal isn't SOTA performance — the goal is:
-        • fast execution in Airflow
-        • proof that embeddings → cell type prediction pipeline works
     """
     model = nn.Sequential(
         nn.Linear(input_dim, 64),
@@ -241,7 +232,7 @@ def train_small_head(
     optimizer = optim.Adam(model.parameters(), lr=lr)
     loss_fn = nn.CrossEntropyLoss()
 
-    # Basic training loop — very quick
+    # Basic training loop
     model.train()
     for epoch in range(num_epochs):
         for batch_X, batch_y in train_loader:
@@ -311,11 +302,7 @@ def write_prometheus_metrics(
 
     log(f"Prometheus metrics written to: {metrics_path}")
 
-
-# ---------------------------------------------------------
-# Main pipeline function — this is what your Airflow DAG calls
-# ---------------------------------------------------------
-
+# Pipleine function that is called when Airflow DAG is called.
 def run_helical_small_pipeline():
     """
     End-to-end lightweight Helical pipeline:
@@ -325,12 +312,7 @@ def run_helical_small_pipeline():
     3. Shrink AnnData massively (fast CPU runs)
     4. Compute scGPT embeddings
     5. Optionally train a tiny classifier head if labels exist
-    6. Write summary metrics for Prometheus/Grafana
-
-    This is intentionally optimized for:
-        • MacBooks / CPUs
-        • Airflow's DockerOperator
-        • Completion within ~2–15 minutes
+    6. Write summary metrics for Prometheus/Grafana monitoring
     """
     log("Starting Helical small pipeline...")
     t0 = time.time()
@@ -388,5 +370,4 @@ def run_helical_small_pipeline():
 
 
 if __name__ == "__main__":
-    # Allow developer to run this locally as: python script.py
     run_helical_small_pipeline()

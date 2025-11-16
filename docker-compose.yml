@@ -1,9 +1,5 @@
 version: "3.8"
 
-# ------------------------------------------------------
-# Common Airflow service definition (image, env, volumes)
-# This block is reused by webserver, scheduler, worker, init.
-# ------------------------------------------------------
 x-airflow-common: &airflow-common
   image: apache/airflow:2.10.2
 
@@ -42,11 +38,6 @@ x-airflow-common: &airflow-common
       apache-airflow[statsd]
       apache-airflow-providers-docker
 
-    # --------------------------------------------------
-    # StatsD → Prometheus metrics pipeline for Airflow
-    # Airflow sends metrics to statsd-exporter, which then
-    # exposes them as Prometheus metrics on :9102.
-    # --------------------------------------------------
     AIRFLOW__METRICS__STATSD_ON: "True"
     AIRFLOW__METRICS__STATSD_HOST: "statsd-exporter"
     AIRFLOW__METRICS__STATSD_PORT: "9125"
@@ -77,9 +68,7 @@ x-airflow-common: &airflow-common
     - redis
     - statsd-exporter
 
-# ------------------------------------------------------
-# Services
-# ------------------------------------------------------
+
 services:
   # ---------------------- Airflow backend DB ----------------------
   postgres:
@@ -133,14 +122,6 @@ services:
           --role Admin
           --email admin@example.com
 
-  # --------------------------------------------------
-  # Prometheus + StatsD + Grafana + cAdvisor stack
-  # This gives you metrics for:
-  #   - Airflow (via StatsD → statsd-exporter)
-  #   - Containers / Docker (via cAdvisor)
-  #   - Visual dashboards (Grafana)
-  # --------------------------------------------------
-
   # ---------------------- StatsD → Prometheus bridge ----------------------
   statsd-exporter:
     image: prom/statsd-exporter
@@ -172,7 +153,7 @@ services:
     depends_on:
       - prometheus
     environment:
-      # Default admin credentials (change in real deployments)
+      # Default admin credentials
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
     ports:
@@ -183,8 +164,6 @@ services:
       - ./monitoring/grafana:/var/lib/grafana
 
   # ---------------------- Container-level metrics (cAdvisor) ----------------------
-  # cAdvisor exposes Docker/container metrics as Prometheus metrics,
-  # which Prometheus scrapes and Grafana visualizes.
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
