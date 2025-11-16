@@ -157,48 +157,5 @@ Lifecycle → Glacier after 60/90 days.
 
 ------------------------------------------------------------------------
 
-## 8. Outcome --- A Production-Like, Scalable Platform
-
-After these changes, your system becomes:
-
-✔ Auto-healing\
-✔ Auto-scaling\
-✔ Encrypted end‑to‑end\
-✔ Log‑retained\
-✔ Audited\
-✔ Cost‑optimized\
-✔ Designed for ML workloads at scale
-
-------------------------------------------------------------------------
-
-## 9. Folder Structure Example (AWS Version)
-
-    aws-helical-workflow/
-    │
-    ├── terraform/          # VPC, EKS, RDS, Redis, EFS, buckets
-    ├── k8s/                # Airflow, exporters, RBAC, IRSA
-    ├── dags/               # Airflow DAGs (Synced/GitSync)
-    ├── charts/             # Helm charts
-    └── runners/            # helical-runner container
-
-------------------------------------------------------------------------
-
-## 10. Summary
-
-This README provides a complete guide to scaling the Helical Airflow
-workflow into AWS using: - EKS\
-- S3\
-- RDS\
-- ElastiCache\
-- AMP\
-- AMG\
-- CloudWatch\
-- KMS + IAM + Secrets Manager
-
-It gives you a **real production blueprint** that can pass a DevOps
-design interview and can be implemented in practice.
-
-------------------------------------------------------------------------
-
 **Author:** Prateek Kesarwani\
 **Project:** Helical Airflow Challenge (Production Scaling Guide)
