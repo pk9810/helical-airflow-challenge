@@ -1,4 +1,4 @@
-# Production-Ready Scaling Guide for Helical Airflow Workflow on AWS
+# Scaling Guide for Helical Airflow Workflow on AWS
 
 This document explains how to scale the local **Airflow + Docker +
 helical-runner + Prometheus/Grafana** workflow into a production-grade,
