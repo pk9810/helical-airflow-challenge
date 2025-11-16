@@ -1,1079 +1,1353 @@
 {
-    "id": null,
-    "uid": null,
-    "title": "Helical Airflow – Full Observability (StatsD Exporter)",
-    "tags": [
-      "airflow",
-      "helical",
-      "statsd",
-      "prometheus"
+  "id": null,
+  "uid": null,
+  "title": "Helical Airflow – Full Observability (StatsD Exporter)",
+  "tags": [
+    "airflow",
+    "helical",
+    "statsd",
+    "prometheus"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "style": "dark",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "1h"
     ],
-    "timezone": "browser",
-    "schemaVersion": 39,
-    "version": 1,
-    "refresh": "15s",
-    "style": "dark",
-    "time": {
-      "from": "now-30m",
-      "to": "now"
-    },
-    "timepicker": {
-      "refresh_intervals": [
-        "5s",
-        "10s",
-        "30s",
-        "1m",
-        "5m",
-        "15m",
-        "1h"
-      ],
-      "time_options": [
-        "5m",
-        "15m",
-        "30m",
-        "1h",
-        "6h",
-        "12h",
-        "24h"
-      ]
-    },
-    "templating": {
-      "list": [
-        {
-          "name": "DS_PROMETHEUS",
-          "type": "datasource",
-          "query": "prometheus",
-          "current": {
-            "selected": true,
-            "text": "Prometheus",
-            "value": "Prometheus"
-          },
-          "hide": 0
-        }
-      ]
-    },
-    "panels": [
+    "time_options": [
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "6h",
+      "12h",
+      "24h"
+    ]
+  },
+  "templating": {
+    "list": [
       {
-        "id": 1,
-        "type": "timeseries",
-        "title": "DAG Run \u2013 helical_model_workflow (avg success duration, s)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+        "name": "DS_PROMETHEUS",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {
+          "selected": true,
+          "text": "Prometheus",
+          "value": "Prometheus"
         },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "s",
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "lineWidth": 1,
-              "spanNulls": true,
-              "stacking": {
-                "mode": "none",
-                "group": "A"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom"
-          },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "airflow_dagrun_duration_success_helical_model_workflow_sum / airflow_dagrun_duration_success_helical_model_workflow_count",
-            "legendFormat": "avg success duration",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 0
-        }
-      },
-      {
-        "id": 2,
-        "type": "timeseries",
-        "title": "DAG Run \u2013 helical_model_workflow (p50 / p90 / p99 success duration, s)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "s",
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "lineWidth": 1,
-              "spanNulls": true,
-              "stacking": {
-                "mode": "none",
-                "group": "A"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom"
-          },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "airflow_dagrun_duration_success_helical_model_workflow{quantile=\"0.5\"}",
-            "legendFormat": "p50",
-            "refId": "A"
-          },
-          {
-            "expr": "airflow_dagrun_duration_success_helical_model_workflow{quantile=\"0.9\"}",
-            "legendFormat": "p90",
-            "refId": "B"
-          },
-          {
-            "expr": "airflow_dagrun_duration_success_helical_model_workflow{quantile=\"0.99\"}",
-            "legendFormat": "p99",
-            "refId": "C"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 0
-        }
-      },
-      {
-        "id": 3,
-        "type": "timeseries",
-        "title": "Model Task \u2013 run_helical_model (avg duration, s)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "s",
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "lineWidth": 1,
-              "spanNulls": true,
-              "stacking": {
-                "mode": "none",
-                "group": "A"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom"
-          },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "airflow_dag_helical_model_workflow_run_helical_model_duration_sum / airflow_dag_helical_model_workflow_run_helical_model_duration_count",
-            "legendFormat": "avg duration",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 8
-        }
-      },
-      {
-        "id": 4,
-        "type": "timeseries",
-        "title": "Model Task \u2013 run_helical_model duration quantiles (s)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "s",
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "lineWidth": 1,
-              "spanNulls": true,
-              "stacking": {
-                "mode": "none",
-                "group": "A"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom"
-          },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "airflow_dag_helical_model_workflow_run_helical_model_duration{quantile=\"0.5\"}",
-            "legendFormat": "p50",
-            "refId": "A"
-          },
-          {
-            "expr": "airflow_dag_helical_model_workflow_run_helical_model_duration{quantile=\"0.9\"}",
-            "legendFormat": "p90",
-            "refId": "B"
-          },
-          {
-            "expr": "airflow_dag_helical_model_workflow_run_helical_model_duration{quantile=\"0.99\"}",
-            "legendFormat": "p99",
-            "refId": "C"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 8
-        }
-      },
-      {
-        "id": 5,
-        "type": "timeseries",
-        "title": "Model Task \u2013 Queue Duration (run_helical_model, s)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "s",
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "lineWidth": 1,
-              "spanNulls": true,
-              "stacking": {
-                "mode": "none",
-                "group": "A"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom"
-          },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "airflow_dag_helical_model_workflow_run_helical_model_queued_duration_sum / airflow_dag_helical_model_workflow_run_helical_model_queued_duration_count",
-            "legendFormat": "avg queue duration",
-            "refId": "A"
-          },
-          {
-            "expr": "airflow_dag_helical_model_workflow_run_helical_model_queued_duration{quantile=\"0.9\"}",
-            "legendFormat": "p90 queue",
-            "refId": "B"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 16
-        }
-      },
-      {
-        "id": 6,
-        "type": "stat",
-        "title": "Celery Task Timeouts (last 30m)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "short",
-            "colors": {
-              "mode": "palette-classic"
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                },
-                {
-                  "color": "red",
-                  "value": 0
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "reduceOptions": {
-            "calcs": [
-              "last"
-            ],
-            "fields": "",
-            "values": false
-          },
-          "orientation": "horizontal",
-          "colorMode": "value",
-          "graphMode": "none",
-          "justifyMode": "center"
-        },
-        "targets": [
-          {
-            "expr": "sum(increase(airflow_celery_task_timeout_error[30m]))",
-            "legendFormat": "",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {
-          "h": 4,
-          "w": 6,
-          "x": 12,
-          "y": 16
-        }
-      },
-      {
-        "id": 7,
-        "type": "stat",
-        "title": "Celery Task Timeouts \u2013 rate (/min)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "short",
-            "colors": {
-              "mode": "palette-classic"
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                },
-                {
-                  "color": "red",
-                  "value": 0
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "reduceOptions": {
-            "calcs": [
-              "last"
-            ],
-            "fields": "",
-            "values": false
-          },
-          "orientation": "horizontal",
-          "colorMode": "value",
-          "graphMode": "none",
-          "justifyMode": "center"
-        },
-        "targets": [
-          {
-            "expr": "sum(rate(airflow_celery_task_timeout_error[5m])) * 60",
-            "legendFormat": "",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {
-          "h": 4,
-          "w": 6,
-          "x": 18,
-          "y": 16
-        }
-      },
-      {
-        "id": 8,
-        "type": "stat",
-        "title": "Scheduler Heartbeat (per min, 5m rate)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "short",
-            "colors": {
-              "mode": "palette-classic"
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                },
-                {
-                  "color": "red",
-                  "value": 0
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "reduceOptions": {
-            "calcs": [
-              "last"
-            ],
-            "fields": "",
-            "values": false
-          },
-          "orientation": "horizontal",
-          "colorMode": "value",
-          "graphMode": "none",
-          "justifyMode": "center"
-        },
-        "targets": [
-          {
-            "expr": "sum(rate(airflow_scheduler_heartbeat[5m]))*60",
-            "legendFormat": "",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {
-          "h": 4,
-          "w": 6,
-          "x": 0,
-          "y": 24
-        }
-      },
-      {
-        "id": 9,
-        "type": "timeseries",
-        "title": "Executor Queues \u2013 open / running / queued tasks",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "short",
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "lineWidth": 1,
-              "spanNulls": true,
-              "stacking": {
-                "mode": "none",
-                "group": "A"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom"
-          },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "airflow_executor_open_slots",
-            "legendFormat": "open slots",
-            "refId": "A"
-          },
-          {
-            "expr": "airflow_executor_running_tasks",
-            "legendFormat": "running tasks",
-            "refId": "B"
-          },
-          {
-            "expr": "airflow_executor_queued_tasks",
-            "legendFormat": "queued tasks",
-            "refId": "C"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 18,
-          "x": 6,
-          "y": 24
-        }
-      },
-      {
-        "id": 10,
-        "type": "timeseries",
-        "title": "Default Pool Slots (open / running / queued / starving)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "short",
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "lineWidth": 1,
-              "spanNulls": true,
-              "stacking": {
-                "mode": "none",
-                "group": "A"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom"
-          },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "airflow_pool_open_slots_default_pool",
-            "legendFormat": "open",
-            "refId": "A"
-          },
-          {
-            "expr": "airflow_pool_running_slots_default_pool",
-            "legendFormat": "running",
-            "refId": "B"
-          },
-          {
-            "expr": "airflow_pool_queued_slots_default_pool",
-            "legendFormat": "queued",
-            "refId": "C"
-          },
-          {
-            "expr": "airflow_pool_starving_tasks_default_pool",
-            "legendFormat": "starving tasks",
-            "refId": "D"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 24,
-          "x": 0,
-          "y": 32
-        }
-      },
-      {
-        "id": 11,
-        "type": "timeseries",
-        "title": "Model Task Resource Usage \u2013 run_helical_model (CPU, cores)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "short",
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "lineWidth": 1,
-              "spanNulls": true,
-              "stacking": {
-                "mode": "none",
-                "group": "A"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom"
-          },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "airflow_task_cpu_usage_helical_model_workflow_run_helical_model",
-            "legendFormat": "task CPU (cores)",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 40
-        }
-      },
-      {
-        "id": 12,
-        "type": "timeseries",
-        "title": "Model Task Resource Usage \u2013 run_helical_model (Memory, GB)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "gbytes",
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "lineWidth": 1,
-              "spanNulls": true,
-              "stacking": {
-                "mode": "none",
-                "group": "A"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom"
-          },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "airflow_task_mem_usage_helical_model_workflow_run_helical_model",
-            "legendFormat": "task memory GB",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 40
-        }
-      },
-      {
-        "id": 13,
-        "type": "timeseries",
-        "title": "Operator Successes (by type, last 30m)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "short",
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "lineWidth": 1,
-              "spanNulls": true,
-              "stacking": {
-                "mode": "none",
-                "group": "A"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom"
-          },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "increase(airflow_operator_successes_DockerOperator[30m])",
-            "legendFormat": "DockerOperator",
-            "refId": "A"
-          },
-          {
-            "expr": "increase(airflow_operator_successes[30m])",
-            "legendFormat": "All operators",
-            "refId": "B"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 48
-        }
-      },
-      {
-        "id": 14,
-        "type": "timeseries",
-        "title": "Task Instances by State \u2013 run_helical_model (last 30m)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "short",
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "lineWidth": 1,
-              "spanNulls": true,
-              "stacking": {
-                "mode": "normal",
-                "group": "A"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom"
-          },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "increase(airflow_ti_finish_helical_model_workflow_run_helical_model_success[30m])",
-            "legendFormat": "success",
-            "refId": "A"
-          },
-          {
-            "expr": "increase(airflow_ti_finish_helical_model_workflow_run_helical_model_failed[30m])",
-            "legendFormat": "failed",
-            "refId": "B"
-          },
-          {
-            "expr": "increase(airflow_ti_finish_helical_model_workflow_run_helical_model_up_for_retry[30m])",
-            "legendFormat": "up_for_retry",
-            "refId": "C"
-          },
-          {
-            "expr": "increase(airflow_ti_finish_helical_model_workflow_run_helical_model_skipped[30m])",
-            "legendFormat": "skipped",
-            "refId": "D"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 48
-        }
-      },
-      {
-        "id": 15,
-        "type": "timeseries",
-        "title": "DAG Processing Duration \u2013 helical_workflow_dag (last parse run, s)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "s",
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "lineWidth": 1,
-              "spanNulls": true,
-              "stacking": {
-                "mode": "none",
-                "group": "A"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom"
-          },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "airflow_dag_processing_last_duration_helical_workflow_dag{quantile=\"0.5\"}",
-            "legendFormat": "p50 parse",
-            "refId": "A"
-          },
-          {
-            "expr": "airflow_dag_processing_last_duration_helical_workflow_dag{quantile=\"0.9\"}",
-            "legendFormat": "p90 parse",
-            "refId": "B"
-          },
-          {
-            "expr": "airflow_dag_processing_last_duration_helical_workflow_dag{quantile=\"0.99\"}",
-            "legendFormat": "p99 parse",
-            "refId": "C"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 56
-        }
-      },
-      {
-        "id": 16,
-        "type": "timeseries",
-        "title": "Global Task Duration (all tasks, avg, s)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "s",
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "lineWidth": 1,
-              "spanNulls": true,
-              "stacking": {
-                "mode": "none",
-                "group": "A"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom"
-          },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "targets": [
-          {
-            "expr": "airflow_task_duration_sum / airflow_task_duration_count",
-            "legendFormat": "avg duration (all tasks)",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 56
-        }
+        "hide": 0
       }
     ]
-  }
-  
+  },
+  "panels": [
+    {
+      "id": 17,
+      "type": "stat",
+      "title": "Task Successes – run_helical_model (last 30m)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "colors": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(airflow_ti_finish_helical_model_workflow_run_helical_model_success[30m]))",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": 18,
+      "type": "stat",
+      "title": "Task Failures – run_helical_model (last 30m)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "colors": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(airflow_ti_finish_helical_model_workflow_run_helical_model_failed[30m]))",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      }
+    },
+    {
+      "id": 19,
+      "type": "stat",
+      "title": "Workflow Duration – helical_model_workflow (avg success, s)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "colors": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "expr": "airflow_dagrun_duration_success_helical_model_workflow_sum / airflow_dagrun_duration_success_helical_model_workflow_count",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 0
+      }
+    },
+    {
+      "id": 20,
+      "type": "stat",
+      "title": "Current Task CPU – run_helical_model (cores)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "colors": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "expr": "airflow_task_cpu_usage_helical_model_workflow_run_helical_model",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      }
+    },
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "Current Task Memory – run_helical_model (GB)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "gbytes",
+          "colors": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "expr": "airflow_task_mem_usage_helical_model_workflow_run_helical_model",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      }
+    },
+
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "DAG Run – helical_model_workflow (avg success duration, s)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "airflow_dagrun_duration_success_helical_model_workflow_sum / airflow_dagrun_duration_success_helical_model_workflow_count",
+          "legendFormat": "avg success duration",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "DAG Run – helical_model_workflow (p50 / p90 / p99 success duration, s)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "airflow_dagrun_duration_success_helical_model_workflow{quantile=\"0.5\"}",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "airflow_dagrun_duration_success_helical_model_workflow{quantile=\"0.9\"}",
+          "legendFormat": "p90",
+          "refId": "B"
+        },
+        {
+          "expr": "airflow_dagrun_duration_success_helical_model_workflow{quantile=\"0.99\"}",
+          "legendFormat": "p99",
+          "refId": "C"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Model Task – run_helical_model (avg duration, s)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "airflow_dag_helical_model_workflow_run_helical_model_duration_sum / airflow_dag_helical_model_workflow_run_helical_model_duration_count",
+          "legendFormat": "avg duration",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Model Task – run_helical_model duration quantiles (s)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "airflow_dag_helical_model_workflow_run_helical_model_duration{quantile=\"0.5\"}",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "airflow_dag_helical_model_workflow_run_helical_model_duration{quantile=\"0.9\"}",
+          "legendFormat": "p90",
+          "refId": "B"
+        },
+        {
+          "expr": "airflow_dag_helical_model_workflow_run_helical_model_duration{quantile=\"0.99\"}",
+          "legendFormat": "p99",
+          "refId": "C"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Model Task – Queue Duration (run_helical_model, s)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "airflow_dag_helical_model_workflow_run_helical_model_queued_duration_sum / airflow_dag_helical_model_workflow_run_helical_model_queued_duration_count",
+          "legendFormat": "avg queue duration",
+          "refId": "A"
+        },
+        {
+          "expr": "airflow_dag_helical_model_workflow_run_helical_model_queued_duration{quantile=\"0.9\"}",
+          "legendFormat": "p90 queue",
+          "refId": "B"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 20
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Celery Task Timeouts (last 30m)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "colors": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(airflow_celery_task_timeout_error[30m]))",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 20
+      }
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Celery Task Timeouts – rate (/min)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "colors": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(airflow_celery_task_timeout_error[5m])) * 60",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 20
+      }
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Scheduler Heartbeat (per min, 5m rate)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "colors": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(airflow_scheduler_heartbeat[5m]))*60",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 28
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Executor Queues – open / running / queued tasks",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "airflow_executor_open_slots",
+          "legendFormat": "open slots",
+          "refId": "A"
+        },
+        {
+          "expr": "airflow_executor_running_tasks",
+          "legendFormat": "running tasks",
+          "refId": "B"
+        },
+        {
+          "expr": "airflow_executor_queued_tasks",
+          "legendFormat": "queued tasks",
+          "refId": "C"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 28
+      }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Default Pool Slots (open / running / queued / starving)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "airflow_pool_open_slots_default_pool",
+          "legendFormat": "open",
+          "refId": "A"
+        },
+        {
+          "expr": "airflow_pool_running_slots_default_pool",
+          "legendFormat": "running",
+          "refId": "B"
+        },
+        {
+          "expr": "airflow_pool_queued_slots_default_pool",
+          "legendFormat": "queued",
+          "refId": "C"
+        },
+        {
+          "expr": "airflow_pool_starving_tasks_default_pool",
+          "legendFormat": "starving tasks",
+          "refId": "D"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Model Task Resource Usage – run_helical_model (CPU, cores)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "airflow_task_cpu_usage_helical_model_workflow_run_helical_model",
+          "legendFormat": "task CPU (cores)",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 44
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Model Task Resource Usage – run_helical_model (Memory, GB)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "gbytes",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "airflow_task_mem_usage_helical_model_workflow_run_helical_model",
+          "legendFormat": "task memory GB",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 44
+      }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Operator Successes (by type, last 30m)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "increase(airflow_operator_successes_DockerOperator[30m])",
+          "legendFormat": "DockerOperator",
+          "refId": "A"
+        },
+        {
+          "expr": "increase(airflow_operator_successes[30m])",
+          "legendFormat": "All operators",
+          "refId": "B"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 52
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Task Instances by State – run_helical_model (last 30m)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "increase(airflow_ti_finish_helical_model_workflow_run_helical_model_success[30m])",
+          "legendFormat": "success",
+          "refId": "A"
+        },
+        {
+          "expr": "increase(airflow_ti_finish_helical_model_workflow_run_helical_model_failed[30m])",
+          "legendFormat": "failed",
+          "refId": "B"
+        },
+        {
+          "expr": "increase(airflow_ti_finish_helical_model_workflow_run_helical_model_up_for_retry[30m])",
+          "legendFormat": "up_for_retry",
+          "refId": "C"
+        },
+        {
+          "expr": "increase(airflow_ti_finish_helical_model_workflow_run_helical_model_skipped[30m])",
+          "legendFormat": "skipped",
+          "refId": "D"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 52
+      }
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "DAG Processing Duration – helical_workflow_dag (last parse run, s)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "airflow_dag_processing_last_duration_helical_workflow_dag{quantile=\"0.5\"}",
+          "legendFormat": "p50 parse",
+          "refId": "A"
+        },
+        {
+          "expr": "airflow_dag_processing_last_duration_helical_workflow_dag{quantile=\"0.9\"}",
+          "legendFormat": "p90 parse",
+          "refId": "B"
+        },
+        {
+          "expr": "airflow_dag_processing_last_duration_helical_workflow_dag{quantile=\"0.99\"}",
+          "legendFormat": "p99 parse",
+          "refId": "C"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 60
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Global Task Duration (all tasks, avg, s)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "airflow_task_duration_sum / airflow_task_duration_count",
+          "legendFormat": "avg duration (all tasks)",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 60
+      }
+    }
+  ]
+}

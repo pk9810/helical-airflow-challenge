@@ -1,33 +1,52 @@
 global:
-  scrape_interval: 15s
-  scrape_timeout: 10s
-  evaluation_interval: 15s
+  # How often Prometheus scrapes metrics from all targets.
+  scrape_interval: 15s  
+
+  # Max amount of time Prometheus waits for a target to reply.
+  scrape_timeout: 10s      
+
+  # How often rule evaluations (alerts, recording rules) run.
+  evaluation_interval: 15s 
 
 scrape_configs:
-
   # -------------------------------------------------------
-  # Scrape Prometheus itself
+  # 1. Prometheus self-scrape
+  #
+  # Prometheus exposes its own metrics on port 9090.
+  # Scraping Prometheus itself helps track:
+  #   • scrape performance
+  #   • rule execution times
+  #   • target health
+  #   • internal TSDB stats
   # -------------------------------------------------------
   - job_name: "prometheus"
     static_configs:
       - targets: ["prometheus:9090"]
 
   # -------------------------------------------------------
-  # Airflow → StatsD Exporter → Prometheus
+  # 2. Airflow Metrics (via StatsD → statsd-exporter → Prometheus)
   #
-  # IMPORTANT:
-  # statsd-exporter exposes metrics on HTTP /metrics at port 9102
+  # Airflow emits StatsD metrics (UDP port :9125).
+  # statsd-exporter converts incoming StatsD counters/gauges
+  # into Prometheus-formatted metrics exposed at /metrics on :9102.
+  #
+  # Common Airflow metrics you’ll see here:
+  #   • airflow_dag_*                (DAG scheduling timings)
+  #   • airflow_task_*               (task successes/failures)
+  #   • airflow_scheduler_*          (scheduler loop stats)
+  #
+  # These feed your Grafana dashboard panels.
   # -------------------------------------------------------
   - job_name: "airflow-statsd"
     metrics_path: /metrics
     static_configs:
       - targets: ["statsd-exporter:9102"]
         labels:
-          service: "airflow"
+          service: "airflow"  # Helpful grouping label for PromQL/Grafana
 
-    # Optional: Clean up StatsD metric names
+    # Optional: renaming / cleaning up StatsD metric names.
+    # (StatsD sometimes uses dot-based names → Prometheus prefers underscores.)
     relabel_configs:
-      # Replace dots with underscores for nicer PromQL usage
       - source_labels: [__name__]
         regex: "(.+)"
         target_label: "__name__"
@@ -35,11 +54,21 @@ scrape_configs:
         action: replace
 
   # -------------------------------------------------------
-  # Container-level metrics via cAdvisor
+  # 3. Container / Docker Metrics via cAdvisor
+  #
+  # cAdvisor exposes rich metrics about:
+  #   • CPU, memory, I/O usage per container
+  #   • Image + container lifecycle state
+  #   • Network rx/tx
+  #   • Disk usage by container
+  #
+  # These power Grafana dashboards like:
+  #   “Container CPU / Memory Usage”
+  #   “Top Containers by Resource Consumption”
   # -------------------------------------------------------
   - job_name: "cadvisor"
     metrics_path: /metrics
     static_configs:
       - targets: ["cadvisor:8080"]
         labels:
-          service: "containers"
+          service: "containers"   # Useful in Grafana templates

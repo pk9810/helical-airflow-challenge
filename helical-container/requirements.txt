@@ -1,3 +1,3 @@
-helical            # main package
-anndata            # to open .h5ad if you want
-scanpy             # optional but nice in this ecosystem
+helical
+anndata                 # to handle annotated data matrices
+scanpy           # to preprocess single-cell data

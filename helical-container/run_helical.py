@@ -19,25 +19,36 @@ from sklearn.metrics import accuracy_score, precision_score, f1_score, recall_sc
 
 from helical.models.scgpt import scGPT, scGPTConfig
 
+# Where Airflow mounts the data folder (in Docker: ./data -> /opt/data)
 DATA_DIR = os.environ.get("DATA_DIR", "/data")
 
 
-# -------------------------
-# Utility helpers
-# -------------------------
+# ---------------------------------------------------------
+# Utility helpers: small wrappers for logging and file discovery
+# ---------------------------------------------------------
 
 def log(msg: str):
+    """
+    Print a log message with timestamp, similar to Airflow task logs.
+
+    Example:
+        [2025-01-10 12:00:00] Loading dataset...
+    """
     print(f"[{datetime.now()}] {msg}")
 
 
 def find_h5ad_files():
     """
-    Look for .h5ad files in the mounted DATA_DIR.
-    We only use the first one found to keep things simple.
+    Look inside the mounted /data directory for any .h5ad files.
+    This allows users to drop in their own datasets without modifying code.
+
+    Returns:
+        A sorted list of full paths to .h5ad files.
     """
     log(f"Looking for .h5ad files in {DATA_DIR}")
+
     if not os.path.isdir(DATA_DIR):
-        log("DATA_DIR does not exist, skipping local files.")
+        log("DATA_DIR does not exist — skipping local file search.")
         return []
 
     files = [
@@ -45,43 +56,46 @@ def find_h5ad_files():
         for f in os.listdir(DATA_DIR)
         if f.endswith(".h5ad")
     ]
+
     if not files:
-        log("No .h5ad files found in DATA_DIR.")
+        log("No .h5ad files found — will fall back to demo dataset.")
     else:
         for f in files:
-            log(f"  - {f}")
+            log(f"  - Found: {f}")
+
     return sorted(files)
 
 
 def load_first_dataset(files):
     """
-    Try to load the first .h5ad from the mounted /data.
-    If it fails, return None (we'll fallback to PBMC3k).
+    Load the first .h5ad file from disk.
+    If anything fails (wrong format, partial file, etc.), return None
+    so the pipeline falls back to using a public Scanpy dataset.
     """
     if not files:
-        log("No .h5ad files passed in; nothing to load from /data.")
+        log("No dataset paths provided — skipping file load.")
         return None
 
     path = files[0]
-    log(f"Loading dataset from disk: {path}")
+    log(f"Loading dataset from: {path}")
+
     try:
         adata = ad.read_h5ad(path)
-        log(f"Loaded AnnData from disk with shape: {adata.shape}")
+        log(f"Loaded AnnData: shape={adata.shape}")
         return adata
     except Exception as e:
-        log(f"Failed to read {path} as .h5ad: {e!r}")
-        log("Will fall back to a demo dataset instead.")
+        log(f"Failed to read .h5ad ({e!r}) — using demo dataset instead.")
         return None
 
 
 def load_demo_dataset():
     """
-    PBMC3k fallback (small public dataset from scanpy).
-    This is purely to make the pipeline robust + fast.
+    Load Scanpy's built-in PBMC3k dataset.
+    This ensures the pipeline always works — even with no local data.
     """
     log("Loading demo PBMC3k dataset via scanpy.datasets.pbmc3k()")
     adata = sc.datasets.pbmc3k()
-    log(f"Demo AnnData loaded with shape: {adata.shape}")
+    log(f"PBMC3k loaded: shape={adata.shape}")
     return adata
 
 
@@ -91,92 +105,102 @@ def shrink_adata(
     max_genes: int = 2000,
 ) -> ad.AnnData:
     """
-    Downsample the AnnData object so everything runs quickly on CPU.
+    Reduce dataset size to make CPU execution fast enough for Airflow/Docker.
 
-    - Randomly sample up to max_cells cells
-    - Randomly sample up to max_genes genes (no HVG / scanpy magic)
+    - Randomly keep up to `max_cells` observations (rows)
+    - Randomly keep up to `max_genes` genes (columns)
 
-    We avoid scanpy.pp.highly_variable_genes to prevent inf/bins errors.
+    This avoids expensive Scanpy steps like HVG selection or normalization.
     """
-    log(f"Original AnnData shape: {adata.shape}")
+    log(f"Original dataset shape: {adata.shape}")
 
-    # Subsample cells
+    # Subsample rows (cells)
     if adata.n_obs > max_cells:
-        rng = np.random.default_rng(seed=42)
+        rng = np.random.default_rng(42)
         idx = rng.choice(adata.n_obs, size=max_cells, replace=False)
         adata = adata[idx].copy()
-        log(f"Subsampled to {adata.n_obs} cells.")
+        log(f"Subsampled cells → {adata.n_obs}")
     else:
-        log(f"n_obs <= {max_cells}; keeping all cells ({adata.n_obs}).")
+        log(f"Cells <= {max_cells}; keeping all.")
 
-    # Subsample genes by random choice (no HVG / no scanpy.cut)
+    # Subsample columns (genes)
     if adata.n_vars > max_genes:
-        rng = np.random.default_rng(seed=42)
+        rng = np.random.default_rng(42)
         gene_idx = rng.choice(adata.n_vars, size=max_genes, replace=False)
         adata = adata[:, gene_idx].copy()
-        log(f"Subsampled genes to {adata.n_vars} genes.")
+        log(f"Subsampled genes → {adata.n_vars}")
     else:
-        log(f"n_vars <= {max_genes}; keeping all genes ({adata.n_vars}).")
+        log(f"Genes <= {max_genes}; keeping all.")
 
-    # Ensure we have a gene_name column for Helical
+    # Ensure scGPT-compatible gene name field
     if "gene_name" not in adata.var.columns:
         adata.var["gene_name"] = adata.var_names.astype(str).str.upper()
 
-    log(f"Final shrunk AnnData shape: {adata.shape}")
+    log(f"Final reduced dataset shape: {adata.shape}")
     return adata
 
 
-# -------------------------
-# Helical + scGPT bits
-# -------------------------
+# ---------------------------------------------------------
+# Helical + scGPT embedding section
+# ---------------------------------------------------------
 
 def get_scgpt_embeddings(adata: ad.AnnData) -> np.ndarray:
+    """
+    Run scGPT embedding generation on the AnnData object.
+
+    The embeddings provide a compact numerical representation of each cell.
+    """
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log(f"[helical] Using device: {device}")
 
     scgpt_config = scGPTConfig(batch_size=32, device=device)
     scgpt = scGPT(configurer=scgpt_config)
 
-    log("[helical] Processing data for scGPT...")
+    log("[helical] Preparing input data...")
     data = scgpt.process_data(adata, gene_names="gene_name")
 
     log("[helical] Computing embeddings...")
     x_scgpt = scgpt.get_embeddings(data)
     log(f"[helical] Embeddings shape: {x_scgpt.shape}")
+
     return x_scgpt
 
 
 def maybe_get_labels(adata: ad.AnnData):
     """
-    Try to extract LVL1 labels if present.
-    If LVL1 missing but 'cell_type' exists, use that as LVL1.
-    If not enough classes, return (None, None) and skip classification.
+    Attempt to extract labels for a quick classifier head.
+
+    Priority:
+      1. adata.obs["LVL1"]
+      2. fallback → adata.obs["cell_type"]
+
+    If neither exists or dataset has <2 classes: skip classification entirely.
     """
-    # If LVL1 not present, but a common label column exists, promote it.
     if "LVL1" not in adata.obs.columns:
         if "cell_type" in adata.obs.columns:
-            log("[helical] LVL1 not found; using 'cell_type' as LVL1.")
+            log("[helical] LVL1 missing — using cell_type instead.")
             adata.obs["LVL1"] = adata.obs["cell_type"].astype(str)
         else:
-            log("[helical] No LVL1 column found in obs; skipping classification.")
+            log("[helical] No label column found; embeddings only.")
             return None, None
 
     labels = np.array(adata.obs["LVL1"].tolist())
     unique = np.unique(labels)
-    if unique.shape[0] < 2:
-        log("[helical] LVL1 has <2 unique labels; skipping classification.")
+
+    if len(unique) < 2:
+        log("[helical] Not enough classes for classification (<2).")
         return None, None
 
-    # Encode labels, using encoder.classes_ as canonical mapping
+    # Fit sklearn label encoder
     encoder = LabelEncoder()
     y_int = encoder.fit_transform(labels)
-    num_types = len(encoder.classes_)
-    y_encoded = one_hot(torch.tensor(y_int), num_types).float()
 
-    # id2type mapping aligned with encoder ordering
+    # One-hot encode class labels for a lightweight NN
+    y_encoded = one_hot(torch.tensor(y_int), num_classes=len(encoder.classes_)).float()
+
     id2type = {i: cls for i, cls in enumerate(encoder.classes_)}
+    log(f"[helical] Identified {len(id2type)} cell types: {id2type}")
 
-    log(f"[helical] Found {num_types} LVL1 cell types: {id2type}")
     return y_encoded, id2type
 
 
@@ -190,8 +214,11 @@ def train_small_head(
     lr: float = 1e-3,
 ) -> nn.Sequential:
     """
-    Very small classifier head, few epochs only.
-    Enough to prove "cell type annotation" without killing the CPU.
+    Train a tiny feedforward classifier on scGPT embeddings.
+
+    The goal isn't SOTA performance — the goal is:
+        • fast execution in Airflow
+        • proof that embeddings → cell type prediction pipeline works
     """
     model = nn.Sequential(
         nn.Linear(input_dim, 64),
@@ -200,6 +227,7 @@ def train_small_head(
         nn.Linear(64, num_classes),
     )
 
+    # Train/validation split
     X_train, X_val, y_train, y_val = train_test_split(
         X, y_encoded, test_size=0.2, random_state=42
     )
@@ -213,6 +241,7 @@ def train_small_head(
     optimizer = optim.Adam(model.parameters(), lr=lr)
     loss_fn = nn.CrossEntropyLoss()
 
+    # Basic training loop — very quick
     model.train()
     for epoch in range(num_epochs):
         for batch_X, batch_y in train_loader:
@@ -222,16 +251,16 @@ def train_small_head(
             loss.backward()
             optimizer.step()
 
-        # quick validation
+        # Quick validation pass
         model.eval()
         val_losses = []
         with torch.no_grad():
             for val_X, val_y in val_loader:
                 val_outputs = model(val_X)
-                val_loss = loss_fn(val_outputs, val_y)
-                val_losses.append(val_loss.item())
-        avg_val = sum(val_losses) / len(val_losses)
-        log(f"[helical] Epoch {epoch + 1}/{num_epochs} - Val loss: {avg_val:.4f}")
+                val_losses.append(loss_fn(val_outputs, val_y).item())
+        avg_val = np.mean(val_losses)
+
+        log(f"[helical] Epoch {epoch+1}/{num_epochs} - Validation Loss: {avg_val:.4f}")
         model.train()
 
     model.eval()
@@ -239,15 +268,18 @@ def train_small_head(
 
 
 def evaluate_metrics(name: str, y_true, y_pred):
+    """
+    Print + return accuracy, precision, f1, recall.
+    """
     acc = accuracy_score(y_true, y_pred)
     prec = precision_score(y_true, y_pred, average="macro")
     f1 = f1_score(y_true, y_pred, average="macro")
     rec = recall_score(y_true, y_pred, average="macro")
 
-    log(f"[helical] {name} accuracy:  {acc * 100:.2f}%")
-    log(f"[helical] {name} precision: {prec * 100:.2f}%")
-    log(f"[helical] {name} f1:        {f1 * 100:.2f}%")
-    log(f"[helical] {name} recall:    {rec * 100:.2f}%")
+    log(f"[helical] {name} accuracy:  {acc*100:.2f}%")
+    log(f"[helical] {name} precision: {prec*100:.2f}%")
+    log(f"[helical] {name} f1-score:  {f1*100:.2f}%")
+    log(f"[helical] {name} recall:    {rec*100:.2f}%")
 
     return {"accuracy": acc, "precision": prec, "f1": f1, "recall": rec}
 
@@ -259,59 +291,69 @@ def write_prometheus_metrics(
     n_genes: int,
 ):
     """
-    Export simple metrics in Prometheus textfile format.
-    If results is None → only duration + dataset stats.
+    Write workflow metrics for Airflow → StatsD → Prometheus → Grafana pipeline.
+
+    This produces a .prom file that Prometheus textfile_exporter can read.
     """
     os.makedirs("/tmp/metrics", exist_ok=True)
     metrics_path = "/tmp/metrics/helical_metrics.prom"
+
     with open(metrics_path, "w") as f:
         f.write(f"helical_workflow_duration_seconds {duration}\n")
         f.write(f"helical_dataset_cells {n_cells}\n")
         f.write(f"helical_dataset_genes {n_genes}\n")
+
         if results is not None:
             f.write(f"helical_scgpt_celltype_accuracy {results['accuracy']}\n")
             f.write(f"helical_scgpt_celltype_precision {results['precision']}\n")
             f.write(f"helical_scgpt_celltype_f1 {results['f1']}\n")
             f.write(f"helical_scgpt_celltype_recall {results['recall']}\n")
-    log(f"Metrics written to: {metrics_path}")
+
+    log(f"Prometheus metrics written to: {metrics_path}")
 
 
-# -------------------------
-# Main pipeline
-# -------------------------
+# ---------------------------------------------------------
+# Main pipeline function — this is what your Airflow DAG calls
+# ---------------------------------------------------------
 
 def run_helical_small_pipeline():
     """
-    Small, CPU-friendly Helical pipeline:
+    End-to-end lightweight Helical pipeline:
 
-    1. Look for mounted .h5ad in /data
-    2. Try to load it; if it fails, use PBMC3k
-    3. Shrink to very small AnnData (e.g. 300 x 2000; random genes)
-    4. Run scGPT embeddings
-    5. OPTIONAL: if LVL1 (or cell_type) present → tiny classifier head
-    6. Export duration + metrics to /tmp/metrics/helical_metrics.prom
+    1. Check /data for .h5ad files
+    2. Load first one found, or fall back to PBMC3k
+    3. Shrink AnnData massively (fast CPU runs)
+    4. Compute scGPT embeddings
+    5. Optionally train a tiny classifier head if labels exist
+    6. Write summary metrics for Prometheus/Grafana
+
+    This is intentionally optimized for:
+        • MacBooks / CPUs
+        • Airflow's DockerOperator
+        • Completion within ~2–15 minutes
     """
-    log("Starting Helical small cell type demo...")
+    log("Starting Helical small pipeline...")
     t0 = time.time()
 
-    # 1) Use mounted data if possible
+    # Step 1: Look for local .h5ad dataset
     files = find_h5ad_files()
     adata = load_first_dataset(files)
 
-    # 2) Fallback to PBMC3k if local file invalid / missing
+    # Step 2: Use fallback if loading fails
     if adata is None:
         adata = load_demo_dataset()
 
-    # 3) Shrink dataset heavily for Mac CPU
+    # Step 3: Shrink dataset dramatically
     adata = shrink_adata(adata, max_cells=300, max_genes=2000)
     n_cells, n_genes = adata.shape
 
-    # 4) Run scGPT embeddings on this tiny dataset
+    # Step 4: scGPT embedding generation
     x_scgpt = get_scgpt_embeddings(adata)
 
-    # 5) Optional classification, only if we can infer LVL1
+    # Step 5: Optional classifier
     results = None
     y_encoded, id2type = maybe_get_labels(adata)
+
     if y_encoded is not None:
         input_dim = x_scgpt.shape[1]
         num_classes = y_encoded.shape[1]
@@ -321,34 +363,30 @@ def run_helical_small_pipeline():
             num_classes=num_classes,
             X=x_scgpt,
             y_encoded=y_encoded,
-            num_epochs=3,   # very short
+            num_epochs=3,
             batch_size=64,
             lr=1e-3,
         )
 
         logits = head_model(torch.from_numpy(x_scgpt))
-        y_pred_idx = np.array(torch.argmax(logits, dim=1))
+        y_pred_idx = torch.argmax(logits, dim=1).numpy()
         y_pred = [id2type[i] for i in y_pred_idx]
         y_true = np.array(adata.obs["LVL1"].tolist())
 
         results = evaluate_metrics("Full tiny set", y_true, y_pred)
     else:
-        log("[helical] Skipping classifier head; only embeddings were computed.")
+        log("[helical] No labels detected — skipping classifier head.")
 
     duration = time.time() - t0
-    log(f"Helical small demo completed in {duration:.2f}s")
+    log(f"Helical pipeline completed in {duration:.2f}s")
 
     version = getattr(helical, "__version__", "unknown")
     log(f"Helical package version: {version}")
 
-    write_prometheus_metrics(duration, results, n_cells=n_cells, n_genes=n_genes)
+    # Step 6: Export metrics for monitoring
+    write_prometheus_metrics(duration, results, n_cells, n_genes)
 
 
 if __name__ == "__main__":
-    # This satisfies:
-    #  - "mount a local folder containing data" → we scan /data for .h5ad
-    #  - run Helical model on a *small* dataset so it finishes within ~15 min on CPU
+    # Allow developer to run this locally as: python script.py
     run_helical_small_pipeline()
-
-
-

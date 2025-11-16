@@ -1,41 +1,87 @@
 version: "3.8"
 
-x-airflow-common:
-  &airflow-common
+# ------------------------------------------------------
+# Common Airflow service definition (image, env, volumes)
+# This block is reused by webserver, scheduler, worker, init.
+# ------------------------------------------------------
+x-airflow-common: &airflow-common
   image: apache/airflow:2.10.2
+
+  # Shared Airflow configuration (env vars)
   environment: &airflow-env
+    # Use CeleryExecutor so we can run distributed workers
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+
+    # Fernet key for encrypting connections/variables
     AIRFLOW__CORE__FERNET_KEY: "fernetkey_please_change"
+
+    # Don’t auto-run new DAGs; keep them paused by default
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+
+    # Don’t clutter the UI with tutorial/example DAGs
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+
+    # Airflow DB (Postgres) connection string
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+
+    # Celery backend where task results are stored
     AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
+
+    # Celery broker (Redis) where task messages are queued
     AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
+
+    # Turn on role-based access control in the UI
     AIRFLOW__WEBSERVER__RBAC: "True"
-# Install Docker provider inside Airflow image
+
+    # --------------------------------------------------
+    # Extra Python packages installed inside Airflow image
+    # via pip at container startup.
+    # Here we pull in statsd support + Docker provider.
+    # --------------------------------------------------
     _PIP_ADDITIONAL_REQUIREMENTS: |
       apache-airflow[statsd]
       apache-airflow-providers-docker
 
-    # 🔹 Enable StatsD metrics from Airflow → statsd-exporter
+    # --------------------------------------------------
+    # StatsD → Prometheus metrics pipeline for Airflow
+    # Airflow sends metrics to statsd-exporter, which then
+    # exposes them as Prometheus metrics on :9102.
+    # --------------------------------------------------
     AIRFLOW__METRICS__STATSD_ON: "True"
     AIRFLOW__METRICS__STATSD_HOST: "statsd-exporter"
     AIRFLOW__METRICS__STATSD_PORT: "9125"
     AIRFLOW__METRICS__STATSD_PREFIX: "airflow"
+    # Enable scheduler metrics (e.g. DAG parsing, task scheduling)
     AIRFLOW__SCHEDULER__ENABLE_METRICS: "True"
 
+  # Shared volumes mounted into all Airflow services
   volumes:
+    # DAGs folder — your workflows live here
     - ./airflow/dags:/opt/airflow/dags
+
+    # Task logs — useful for debugging + long-term storage
     - ./airflow/logs:/opt/airflow/logs
+
+    # Custom Airflow configs (airflow.cfg, webserver_config.py, etc.)
     - ./airflow/config:/opt/airflow/config
-    - ./data:/opt/data              # <– shared data folder
+
+    # Shared data folder (for Helical models / .h5ad files / etc.)
+    - ./data:/opt/data
+
+    # Give Airflow access to Docker socket so DockerOperator can launch containers
     - /var/run/docker.sock:/var/run/docker.sock
+
+  # Make sure core infra comes up first
   depends_on:
     - postgres
     - redis
     - statsd-exporter
 
+# ------------------------------------------------------
+# Services
+# ------------------------------------------------------
 services:
+  # ---------------------- Airflow backend DB ----------------------
   postgres:
     image: postgres:15
     environment:
@@ -43,27 +89,35 @@ services:
       POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
     healthcheck:
+      # Simple readiness probe to wait for Postgres to be ready
       test: ["CMD", "pg_isready", "-U", "airflow"]
       interval: 10s
       retries: 5
 
+  # ---------------------- Celery broker ----------------------
   redis:
     image: redis:7
 
+  # ---------------------- Airflow Web UI ----------------------
   airflow-webserver:
     <<: *airflow-common
     command: webserver
     ports:
+      # Airflow UI available at http://localhost:8080
       - "8080:8080"
 
+  # ---------------------- Airflow Scheduler ----------------------
   airflow-scheduler:
     <<: *airflow-common
     command: scheduler
 
+  # ---------------------- Airflow Celery Worker ----------------------
   airflow-worker:
     <<: *airflow-common
     command: celery worker
 
+  # ---------------------- One-off Airflow Init Job ----------------------
+  # Runs DB migrations and creates an admin user the first time.
   airflow-init:
     <<: *airflow-common
     command:
@@ -79,47 +133,66 @@ services:
           --role Admin
           --email admin@example.com
 
- # 🔹 Prometheus metrics pipeline
+  # --------------------------------------------------
+  # Prometheus + StatsD + Grafana + cAdvisor stack
+  # This gives you metrics for:
+  #   - Airflow (via StatsD → statsd-exporter)
+  #   - Containers / Docker (via cAdvisor)
+  #   - Visual dashboards (Grafana)
+  # --------------------------------------------------
 
+  # ---------------------- StatsD → Prometheus bridge ----------------------
   statsd-exporter:
     image: prom/statsd-exporter
     container_name: statsd-exporter
-    # listens on UDP :9125 for statsd and :9102 for /metrics
+    # Listens for StatsD metrics on UDP :9125
+    # and exposes Prometheus /metrics on :9102.
     ports:
-      - "9102:9102"         # Prometheus scrapes here
-      - "9125:9125/udp"     # Airflow sends StatsD metrics here
+      - "9102:9102"         # Prometheus scrapes metrics here
+      - "9125:9125/udp"     # Airflow ships StatsD metrics here
 
+  # ---------------------- Prometheus time-series DB ----------------------
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     volumes:
+      # Prometheus config defines scrape targets (statsd-exporter, cAdvisor, etc.)
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
+      # Prometheus UI at http://localhost:9090
       - "9090:9090"
     depends_on:
       - statsd-exporter
       - cadvisor
 
+  # ---------------------- Grafana dashboarding UI ----------------------
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
     depends_on:
       - prometheus
     environment:
+      # Default admin credentials (change in real deployments)
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
     ports:
+      # Grafana UI at http://localhost:3000
       - "3000:3000"
     volumes:
+      # Persist Grafana config, dashboards, and data sources
       - ./monitoring/grafana:/var/lib/grafana
 
-  # ---------------------- Container-level metrics ----------------------
+  # ---------------------- Container-level metrics (cAdvisor) ----------------------
+  # cAdvisor exposes Docker/container metrics as Prometheus metrics,
+  # which Prometheus scrapes and Grafana visualizes.
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
     ports:
+      # cAdvisor UI at http://localhost:8081
       - "8081:8080"
     volumes:
+      # Read-only access to Docker runtime and filesystem for metrics
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /:/rootfs:ro
       - /var/lib/docker/:/var/lib/docker:ro
